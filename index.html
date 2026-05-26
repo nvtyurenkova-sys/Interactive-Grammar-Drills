@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Word Formation Trainer</title>
+<style>
+:root{
+  --bg:#f6f1e8;
+  --card:#ffffff;
+  --text:#222;
+  --muted:#666;
+  --accent:#2f2f2f;
+  --good:#1f9d55;
+  --bad:#d83d3d;
+  --soft:#f9f6ef;
+}
+*{box-sizing:border-box}
+html,body{
+  margin:0;
+  padding:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  -webkit-text-size-adjust:100%;
+}
+.wrapper{
+  width:100%;
+  max-width:760px;
+  margin:0 auto;
+  padding:calc(12px + env(safe-area-inset-top)) 12px calc(24px + env(safe-area-inset-bottom));
+}
+.header{text-align:center;padding:8px 6px 10px;}
+h1{margin:0;font-size:26px;line-height:1.15;}
+.subtitle{margin-top:6px;color:var(--muted);font-size:14px;}
+.panel{
+  position:sticky;
+  top:0;
+  z-index:5;
+  background:rgba(246,241,232,.96);
+  backdrop-filter:blur(8px);
+  padding:8px 0 10px;
+}
+.scorebox{
+  background:var(--accent);
+  color:white;
+  border-radius:16px;
+  padding:12px;
+  text-align:center;
+  font-weight:700;
+  font-size:18px;
+}
+.progress{
+  height:8px;
+  background:#ddd2c3;
+  border-radius:999px;
+  overflow:hidden;
+  margin-top:8px;
+}
+.bar{height:100%;width:0%;background:#333;transition:.2s;}
+.card{
+  background:var(--card);
+  border-radius:18px;
+  padding:15px;
+  margin:12px 0;
+  box-shadow:0 2px 10px rgba(0,0,0,.07);
+}
+.taskline{font-size:17px;line-height:1.42;}
+.baseword{
+  display:inline-block;
+  margin-top:10px;
+  padding:6px 10px;
+  background:var(--soft);
+  border-radius:999px;
+  font-size:15px;
+  font-weight:700;
+  letter-spacing:.03em;
+  color:#7a4d00;
+}
+input{
+  width:100%;
+  min-height:48px;
+  padding:12px 13px;
+  margin-top:12px;
+  font-size:18px;
+  border-radius:14px;
+  border:2px solid #d3d3d3;
+  outline:none;
+  background:#fff;
+}
+input:focus{border-color:#333;}
+input.correct{border-color:var(--good);background:#ecfff3;}
+input.wrong{border-color:var(--bad);background:#fff2f2;}
+.answer{display:none;margin-top:8px;font-size:15px;color:#8a1f1f;}
+.buttons{
+  position:sticky;
+  bottom:0;
+  z-index:6;
+  padding:10px 0 calc(8px + env(safe-area-inset-bottom));
+  background:rgba(246,241,232,.96);
+  backdrop-filter:blur(8px);
+  display:grid;
+  gap:8px;
+}
+button{
+  width:100%;
+  min-height:50px;
+  border:none;
+  border-radius:15px;
+  font-size:17px;
+  font-weight:700;
+  color:white;
+  background:#333;
+  touch-action:manipulation;
+}
+button.secondary{background:#705c45;}
+button.light{background:#8c8c8c;}
+.note{
+  margin:12px 4px;
+  font-size:13px;
+  color:var(--muted);
+  text-align:center;
+}
+@media (min-width:560px){
+  .buttons{grid-template-columns:1fr 1fr 1fr;}
+}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <h1>Word Formation Trainer</h1>
+    <div class="subtitle">iPhone-friendly practice · answers can be saved</div>
+  </div>
+
+  <div class="panel">
+    <div class="scorebox" id="score">Score: 0 / 35</div>
+    <div class="progress"><div class="bar" id="bar"></div></div>
+  </div>
+
+  <form id="trainer" autocomplete="off">
+    <div id="tasks"></div>
+  </form>
+
+  <div class="buttons">
+    <button type="button" onclick="checkAnswers()">Check</button>
+    <button type="button" class="secondary" onclick="saveAnswers()">Save answers</button>
+    <button type="button" class="light" onclick="resetAll()">Reset</button>
+  </div>
+
+  <div class="note">The answers are downloaded as a TXT file.</div>
+</div>
+
+<script>
+const tasks = [
+["There is a big ___ between the two pictures.","DIFFER","difference"],
+["Her ___ made everybody smile.","KIND","kindness"],
+["His ___ is very neat and clear.","WRITE","writing"],
+["Anna is a very ___ student.","CREATE","creative"],
+["The children played ___ in the garden.","HAPPY","happily"],
+["I will ___ come to your party.","DEFINITE","definitely"],
+["It was a ___ competition with students from many countries.","NATION","national"],
+["People ___ celebrate this holiday in our town.","TRADITION","traditionally"],
+["The room was ___ dark after the storm.","COMPLETE","completely"],
+["The weather was cold and ___.","PLEASURE","unpleasant"],
+["I saw an interesting ___ on TV yesterday.","ADVERTISE","advertisement"],
+["The actress was very ___.","ATTRACT","attractive"],
+["This course teaches the ___ rules of grammar.","BASIS","basic"],
+["Our school won the football ___.","CHAMPION","championship"],
+["The little girl had a very ___ smile.","CHARM","charming"],
+["It was a difficult ___ to make.","DECIDE","decision"],
+["The children shouted with ___.","EXCITE","excitement"],
+["We stayed in an ___ hotel near the beach.","EXPENSE","inexpensive"],
+["Can you give me an ___ of this rule?","EXPLAIN","explanation"],
+["Their ___ has lasted for many years.","FRIEND","friendship"],
+["Regular exercise improves your ___.","FIT","fitness"],
+["She speaks English very ___.","FLUENT","fluently"],
+["You are very ___ to have such good friends.","LUCK","lucky"],
+["What is the ___ of this word?","MEAN","meaning"],
+["The ___ played the piano beautifully.","MUSIC","musician"],
+["It is ___ to finish this work today.","POSSIBLE","impossible"],
+["Scientists made an important ___ discovery.","SCIENCE","scientific"],
+["What a ___ little puppy!","LOVE","lovely"],
+["We discussed ___ ideas for the project.","VARY","various"],
+["After a long ___, he stayed at home.","ILL","illness"],
+["The baby looked ___ after the trip.","SLEEP","sleepy"],
+["She travelled to several ___ countries.","EUROPE","European"],
+["Tom goes to the gym ___.","REGULAR","regularly"],
+["His visit was completely ___.","EXPECT","unexpected"],
+["The boy solved the problem very ___.","EASY","easily"]
+];
+
+const tasksDiv = document.getElementById("tasks");
+
+tasks.forEach((t,i)=>{
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerHTML = `
+    <div class="taskline"><b>${i+1}.</b> ${t[0]}</div>
+    <div class="baseword">${t[1]}</div>
+    <input type="text" id="q${i}" inputmode="text" autocapitalize="none" spellcheck="false" aria-label="Answer ${i+1}">
+    <div class="answer" id="a${i}">Correct answer: <b>${t[2]}</b></div>
+  `;
+  tasksDiv.appendChild(card);
+});
+
+document.querySelectorAll("input").forEach(inp=>{
+  inp.addEventListener("input", updateProgress);
+});
+
+function normalize(s){
+  return s.trim().toLowerCase();
+}
+
+function updateProgress(){
+  const filled = tasks.filter((_,i)=>document.getElementById(`q${i}`).value.trim() !== "").length;
+  document.getElementById("bar").style.width = `${Math.round(filled/tasks.length*100)}%`;
+}
+
+function checkAnswers(){
+  let score = 0;
+  tasks.forEach((t,i)=>{
+    const input = document.getElementById(`q${i}`);
+    const answerBox = document.getElementById(`a${i}`);
+    if(normalize(input.value) === normalize(t[2])){
+      input.classList.add("correct");
+      input.classList.remove("wrong");
+      answerBox.style.display = "none";
+      score++;
+    } else {
+      input.classList.add("wrong");
+      input.classList.remove("correct");
+      answerBox.style.display = "block";
+    }
+  });
+  document.getElementById("score").innerText = `Score: ${score} / ${tasks.length}`;
+  updateProgress();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function saveAnswers(){
+  let score = 0;
+  let lines = [];
+  const now = new Date();
+  lines.push("Word Formation Trainer");
+  lines.push("Date: " + now.toLocaleString());
+  lines.push("");
+
+  tasks.forEach((t,i)=>{
+    const user = document.getElementById(`q${i}`).value.trim();
+    const correct = t[2];
+    const ok = normalize(user) === normalize(correct);
+    if(ok) score++;
+    lines.push(`${i+1}. ${t[0]}`);
+    lines.push(`Base word: ${t[1]}`);
+    lines.push(`Student answer: ${user || "—"}`);
+    lines.push(`Correct answer: ${correct}`);
+    lines.push(`Result: ${ok ? "correct" : "wrong"}`);
+    lines.push("");
+  });
+
+  lines.unshift(`Score: ${score} / ${tasks.length}`);
+  const blob = new Blob([lines.join("\n")], {type:"text/plain;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "word_formation_answers.txt";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function resetAll(){
+  tasks.forEach((_,i)=>{
+    const input = document.getElementById(`q${i}`);
+    input.value = "";
+    input.classList.remove("correct","wrong");
+    document.getElementById(`a${i}`).style.display = "none";
+  });
+  document.getElementById("score").innerText = `Score: 0 / ${tasks.length}`;
+  document.getElementById("bar").style.width = "0%";
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+</script>
+</body>
+</html>
